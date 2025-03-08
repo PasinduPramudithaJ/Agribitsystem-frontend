@@ -16,18 +16,19 @@ const Add = () => {
     size: "",
     status: "",
     productQuantity: 0,
-    userId: "",
+    userId: "", // Automatically filled with the logged-in user's ID
   });
 
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(null); // State to hold the image file
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Extract the userId from the JWT token stored in localStorage
     const currentUser = localStorage.getItem("currentUser");
     if (currentUser) {
       const { userId } = JSON.parse(currentUser);
-      setProduct((prevProduct) => ({ ...prevProduct, userId }));
+      setProduct((prevProduct) => ({ ...prevProduct, userId })); // Set the userId in the product state
     }
   }, []);
 
@@ -40,7 +41,7 @@ const Add = () => {
   };
 
   const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
+    setImage(e.target.files[0]); // Update image state
   };
 
   const validate = () => {
@@ -64,44 +65,50 @@ const Add = () => {
     }
 
     const formData = new FormData();
-    formData.append("product", JSON.stringify(product));
+    formData.append("product", JSON.stringify(product)); // Append product data as JSON string
     if (image) {
-      formData.append("image", image);
+      formData.append("image", image); // Append image file if available
     }
 
-    const token = localStorage.getItem("currentUser")
-      ? JSON.parse(localStorage.getItem("currentUser")).token
-      : null;
+    try {
+      // Retrieve the token from localStorage
+      const token = localStorage.getItem("currentUser")
+        ? JSON.parse(localStorage.getItem("currentUser")).token
+        : null;
 
-    const apiUrls = [
-      "http://localhost:8080/api/products",
-      "https://agribitsystembackend-production.up.railway.app/api/products",
-    ];
-
-    for (const url of apiUrls) {
-      try {
+      // Function to send request
+      const sendRequest = async (url) => {
         const response = await fetch(url, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`, // Include the JWT token in the Authorization header
           },
-          body: formData,
+          body: formData, // Send multipart form data
         });
+        return response;
+      };
 
-        if (response.ok) {
-          alert("Product created successfully!");
-          navigate("/gigs");
-          return;
-        } else {
-          const errorData = await response.json();
-          console.warn(`Error from ${url}: ${errorData.message}`);
-        }
-      } catch (error) {
-        console.error(`Request failed for ${url}:`, error);
+      // Try to send the request to the primary API first
+      let response = await sendRequest("http://localhost:8080/api/products");
+
+      // If primary API fails, try the backup API
+      if (!response.ok) {
+        console.log("Primary API failed. Trying backup API...");
+        response = await sendRequest("https://agribitsystembackend-production.up.railway.app/api/products");
       }
-    }
 
-    alert("Failed to create product on all servers. Please try again later.");
+      // Handle response after trying both APIs
+      if (response.ok) {
+        alert("Product created successfully!");
+        navigate("/gigs"); // Navigate to the product list or relevant page
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error("Error creating product:", error);
+      alert("Failed to create product. Please try again.");
+    }
   };
 
   return (
@@ -109,7 +116,65 @@ const Add = () => {
       <div className="container">
         <h1>Add New Product</h1>
         <form onSubmit={handleSubmit}>
-          {/* Form fields */}
+          {[ /* Form Fields */ ].map((field) => (
+            <div className="form-group" key={field.name}>
+              <label htmlFor={field.name}>{field.label}</label>
+              {field.type === "textarea" ? (
+                <textarea
+                  name={field.name}
+                  id={field.name}
+                  placeholder={field.placeholder}
+                  value={product[field.name]}
+                  onChange={handleChange}
+                  required
+                />
+              ) : (
+                <input
+                  type={field.type}
+                  name={field.name}
+                  id={field.name}
+                  placeholder={field.placeholder}
+                  value={product[field.name]}
+                  onChange={handleChange}
+                  required
+                />
+              )}
+              {errors[field.name] && <span className="error">{errors[field.name]}</span>}
+            </div>
+          ))}
+
+          {/* Category dropdown */}
+          <div className="form-group">
+            <label htmlFor="category">Category</label>
+            <select
+              name="category"
+              id="category"
+              value={product.category}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select a category</option>
+              <option value="vegetables">Vegetables</option>
+              <option value="fruits">Fruits</option>
+              <option value="coconuts">Coconuts</option>
+              <option value="fish">Fish</option>
+              <option value="meat">Meat</option>
+            </select>
+            {errors.category && <span className="error">{errors.category}</span>}
+          </div>
+
+          {/* Image upload */}
+          <div className="form-group">
+            <label htmlFor="image">Upload Image</label>
+            <input
+              type="file"
+              name="image"
+              id="image"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+          </div>
+
           <button type="submit">Create Product</button>
         </form>
       </div>
