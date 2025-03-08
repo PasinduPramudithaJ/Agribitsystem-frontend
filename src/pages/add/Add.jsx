@@ -89,12 +89,12 @@ const Add = () => {
       };
 
       // Try to send the request to the primary API first
-      let response = await sendRequest("http://localhost:8080/api/products");
+      let response = await sendRequest("https://agribitsystembackend-production.up.railway.app/api/products");
 
       // If primary API fails, try the backup API
       if (!response.ok) {
         console.log("Primary API failed. Trying backup API...");
-        response = await sendRequest("https://agribitsystembackend-production.up.railway.app/api/products");
+        response = await sendRequest("http://localhost:8080/api/products");
       }
 
       // Handle response after trying both APIs
