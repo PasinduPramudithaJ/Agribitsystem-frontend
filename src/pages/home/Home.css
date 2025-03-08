@@ -1,0 +1,153 @@
+.home {
+  .features {
+    background-color: #f1fdf7;
+    display: flex;
+    justify-content: center;
+    padding: 100px 0px;
+  }
+
+  .features.dark {
+    background-color: #0b3012;
+  }
+
+  .features.dark h1 {
+    color: white !important;
+  }
+
+  .features.dark i {
+    font-weight: 300;
+  }
+
+  .features.dark p {
+    margin-bottom: 20px;
+    color: white !important;
+  }
+
+  .features.dark .title {
+    color: white !important;
+    font-weight: 300 !important;
+    font-size: 14px !important;
+  }
+
+  .features.dark button {
+    background-color: #1dbf73;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    width: max-content;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+
+  .features .container {
+    width: 1400px;
+    display: flex;
+    align-items: center;
+    gap: 200px;
+  }
+
+  .features .container .item {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .features .container .item:first-child {
+    flex: 2;
+  }
+
+  .features .container .item:last-child {
+    flex: 3;
+  }
+
+  .features .container .item img {
+    width: 100%;
+  }
+
+  .features .container .item h1 {
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+
+  .features .container .item .title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    font-size: 18px;
+    color: #666;
+  }
+
+  .features .container .item .title img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .features .container .item p {
+    font-size: 18px;
+    font-weight: 300;
+    color: gray;
+    line-height: 28px;
+    letter-spacing: 1px;
+  }
+
+  .features .container .item video {
+    width: 720px;
+  }
+
+  .explore {
+    display: flex;
+    justify-content: center;
+    padding: 100px 0px;
+  }
+
+  .explore .container {
+    width: 1400px;
+  }
+
+  .explore .container h1 {
+    color: #555;
+  }
+
+  .explore .container .items {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .explore .container .items .item {
+    width: 25px;
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .explore .container .items .item img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .explore .container .items .item .line {
+    width: 50px;
+    height: 2px;
+    background-color: lightgray;
+    transition: all 0.3s ease;
+  }
+
+  .explore .container .items .item span {
+    font-weight: 300;
+  }
+
+  .explore .container .items .item:hover .line {
+    width: 80px;
+    background-color: #1dbf73;
+  }
+}

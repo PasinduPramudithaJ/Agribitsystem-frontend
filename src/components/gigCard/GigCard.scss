@@ -1,0 +1,105 @@
+.gigCard {
+  width: 324px;
+  height: 640px;
+  border: 1px solid rgba(228, 228, 228, 0.8);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+   
+  &:hover {
+    transform: translateY(-12px) rotate(-1deg);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    border-color: #0073e6;
+  }
+   
+  img {
+    width: 100%;
+    height: 50%;
+    object-fit: cover;
+    border-bottom: 2px solid rgba(228, 228, 228, 0.8);
+    transition: transform 0.4s ease, border-color 0.3s ease;
+     
+    &:hover {
+      transform: scale(1.08);
+      border-color: #0073e6;
+    }
+  }
+   
+  .info {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+     
+    h2 {
+      font-size: 20px;
+      color: #222;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 700;
+      text-transform: capitalize;
+    }
+     
+    p {
+      font-size: 15px;
+      color: #555;
+      line-height: 1.6;
+      margin: 0;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+     
+    span {
+      font-size: 18px;
+      color: #114109;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+   
+  .detail {
+    padding: 15px 20px;
+    background: linear-gradient(90deg, #09381c, #305609);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+     
+    .price {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+       
+      span {
+        font-size: 14px;
+        color: #cfcfcf;
+      }
+       
+      h2 {
+        font-size: 18px;
+        font-weight: 800;
+        color: #fff;
+      }
+    }
+     
+    img {
+      width: 25px;
+      height: 15px;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+       
+      &:hover {
+        transform: scale(1.2) rotate(5deg);
+      }
+    }
+  }
+}
