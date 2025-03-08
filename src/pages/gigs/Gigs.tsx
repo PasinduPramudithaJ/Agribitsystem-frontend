@@ -21,14 +21,27 @@ function Gigs() {
       const min = minRef.current?.value || "0";
       const max = maxRef.current?.value || "10000";
 
-      const response = await axios.get(
-        `http://localhost:8080/api/products?min=${min}&max=${max}&sort=${sort}`,
-        {
-          headers: {
-            "Current-User-ID": currentUser.id || "",
-          },
-        }
-      );
+      let response;
+      try {
+        response = await axios.get(
+          `http://localhost:8080/api/products?min=${min}&max=${max}&sort=${sort}`,
+          {
+            headers: {
+              "Current-User-ID": currentUser.id || "",
+            },
+          }
+        );
+      } catch (error) {
+        console.warn("Localhost failed, switching to production backend.");
+        response = await axios.get(
+          `https://agribitsystembackend-production.up.railway.app/api/products?min=${min}&max=${max}&sort=${sort}`,
+          {
+            headers: {
+              "Current-User-ID": currentUser.id || "",
+            },
+          }
+        );
+      }
       setData(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred.");

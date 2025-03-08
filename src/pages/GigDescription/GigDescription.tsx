@@ -4,6 +4,18 @@ import axios from "axios";
 import "./GigDescription.scss";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+const PRIMARY_API_URL = "http://localhost:8080";
+const FAILOVER_API_URL = "https://agribitsystembackend-production.up.railway.app";
+
+const fetchWithFailover = async (url: string) => {
+  try {
+    return await axios.get(`${PRIMARY_API_URL}${url}`);
+  } catch (error) {
+    console.warn("Primary API failed, switching to failover...");
+    return await axios.get(`${FAILOVER_API_URL}${url}`);
+  }
+};
+
 interface Product {
   name: string;
   description: string;
@@ -40,7 +52,7 @@ function GigDescription() {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await axios.get(`http://localhost:8080/api/products/${productId}`);
+        const response = await fetchWithFailover(`/api/products/${productId}`);
         setProduct(response.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -51,7 +63,7 @@ function GigDescription() {
 
     const fetchBids = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/bids/product/${productId}`);
+        const response = await fetchWithFailover(`/api/bids/product/${productId}`);
         setBids(response.data);
       } catch (err) {
         console.error("Error fetching bids:", err);
@@ -75,7 +87,6 @@ function GigDescription() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Validation
     if (!bid.userId || bid.userId.length < 10) {
       alert("Please enter a valid phone number");
       return;
@@ -92,18 +103,18 @@ function GigDescription() {
     }
 
     try {
-      const response = await axios.post("http://localhost:8080/api/bids", {
+      const response = await axios.post(`${PRIMARY_API_URL}/api/bids`, {
         ...bid,
         productId: productId
-      });
+      }).catch(() => axios.post(`${FAILOVER_API_URL}/api/bids`, {
+        ...bid,
+        productId: productId
+      }));
       
-      if (response.status === 200 || response.status === 201) {
+      if (response?.status === 200 || response?.status === 201) {
         alert("Bid created successfully!");
-        // Refresh bids
-        const updatedBidsResponse = await axios.get(`http://localhost:8080/api/bids/product/${productId}`);
+        const updatedBidsResponse = await fetchWithFailover(`/api/bids/product/${productId}`);
         setBids(updatedBidsResponse.data);
-        
-        // Reset form
         setBid({
           productId: productId || "",
           userId: "",
@@ -186,21 +197,6 @@ function GigDescription() {
               <button type="submit" className="submit-button">Submit Bid</button>
             </form>
           </div>
-
-          <div className="bid-list">
-            <h2 className="section-title">Existing Bids</h2>
-            {bids.length > 0 ? (
-              <ul>
-                {bids.map((b, index) => (
-                  <li key={index} className="bid-item">
-                    User: {b.userId}, Bid: LKR {b.bidAmount}, Quantity: {b.quantity}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No bids yet.</p>
-            )}
-          </div>
         </>
       ) : (
         <span>Product not found.</span>
@@ -210,3 +206,4 @@ function GigDescription() {
 }
 
 export default GigDescription;
+

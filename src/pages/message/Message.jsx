@@ -7,45 +7,56 @@ import "./Message.scss";
 const Message = () => {
   const { userId } = useParams(); // Assuming `userId` is passed as a parameter
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-
   const queryClient = useQueryClient();
 
-  // Fetch notifications for the specific user
+  const fetchNotifications = async () => {
+    try {
+      return await axios
+        .get(`http://localhost:8080/api/notifications/user/${userId}`)
+        .then((res) => res.data);
+    } catch (error) {
+      console.error("Localhost failed, trying production backend");
+      return await axios
+        .get(`https://agribitsystembackend-production.up.railway.app/api/notifications/user/${userId}`)
+        .then((res) => res.data);
+    }
+  };
+
   const { isLoading, error, data } = useQuery({
     queryKey: ["notifications", userId],
-    queryFn: () =>
-      axios
-        .get(`http://localhost:8080/api/notifications/user/${userId}`) // Update the URL to match your Spring Boot API
-        .then((res) => res.data),
+    queryFn: fetchNotifications,
   });
 
-  // Mutation to create a new notification
   const mutation = useMutation({
-    mutationFn: (notification) => {
-      return axios.post("http://localhost:8080/api/notifications", notification); // Update the URL to match your Spring Boot API
+    mutationFn: async (notification) => {
+      try {
+        return await axios.post("http://localhost:8080/api/notifications", notification);
+      } catch (error) {
+        console.error("Localhost failed, trying production backend");
+        return await axios.post("https://agribitsystembackend-production.up.railway.app/api/notifications", notification);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["notifications", userId]);
     },
   });
 
-  // Handle form submission to send a new notification
   const handleSubmit = (e) => {
     e.preventDefault();
     mutation.mutate({
-      userId: userId, // Recipient's user ID
+      userId: userId,
       content: e.target[0].value,
       timestamp: new Date().toISOString(),
       status: "Unread",
     });
-    e.target[0].value = ""; // Clear the textarea after submission
+    e.target[0].value = "";
   };
 
   return (
     <div className="message">
       <div className="container">
         <span className="breadcrumbs">
-          <Link to="/notifications">Notifications</Link>  User Notifications 
+          <Link to="/notifications">Notifications</Link> User Notifications
         </span>
         {isLoading ? (
           "Loading notifications..."

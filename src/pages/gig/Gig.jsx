@@ -7,7 +7,7 @@ const Gig = () => {
     productId: "",
     userId: "",
     bidAmount: 0.0,
-    quantity: 1.0, // Added quantity field
+    quantity: 1.0,
   });
 
   const navigate = useNavigate();
@@ -19,26 +19,35 @@ const Gig = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch("http://localhost:8080/api/bids", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bid),
-      });
+    const apiUrls = [
+      "http://localhost:8080/api/bids",
+      "https://agribitsystembackend-production.up.railway.app/api/bids",
+    ];
 
-      if (response.ok) {
-        alert("Bid created successfully!");
-        navigate("/"); // Navigate to the bids list or another relevant page
-      } else {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.message}`);
+    for (const url of apiUrls) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bid),
+        });
+
+        if (response.ok) {
+          alert("Bid created successfully!");
+          navigate("/");
+          return;
+        } else {
+          const errorData = await response.json();
+          console.warn(`Error from ${url}: ${errorData.message}`);
+        }
+      } catch (error) {
+        console.error(`Request failed for ${url}:`, error);
       }
-    } catch (error) {
-      console.error("Error creating bid:", error);
-      alert("Failed to create bid. Please try again.");
     }
+
+    alert("Failed to create bid on all servers. Please try again later.");
   };
 
   return (

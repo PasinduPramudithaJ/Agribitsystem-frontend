@@ -29,6 +29,7 @@ const Orders: React.FC = () => {
   useEffect(() => {
     const fetchBidsAndMaxBid = async () => {
       try {
+        // Try fetching from the primary endpoint
         const response = await fetch(`http://localhost:8080/api/bids/product/${productId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch bids for the product");
@@ -43,7 +44,24 @@ const Orders: React.FC = () => {
         const maxBidData: MaxTotalAmountBid = await maxBidResponse.json();
         setMaxTotalAmountBid(maxBidData);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "An unexpected error occurred");
+        // If primary API fails, try the backup endpoint
+        try {
+          const backupResponse = await fetch(`https://agribitsystembackend-production.up.railway.app/api/bids/product/${productId}`);
+          if (!backupResponse.ok) {
+            throw new Error("Failed to fetch bids for the product from the backup API");
+          }
+          const backupData: Bid[] = await backupResponse.json();
+          setBids(backupData);
+
+          const maxBackupResponse = await fetch(`https://agribitsystembackend-production.up.railway.app/api/bids/max-total/${productId}`);
+          if (!maxBackupResponse.ok) {
+            throw new Error("Failed to fetch max total amount bid for the product from the backup API");
+          }
+          const maxBackupData: MaxTotalAmountBid = await maxBackupResponse.json();
+          setMaxTotalAmountBid(maxBackupData);
+        } catch (backupError) {
+          setError(backupError instanceof Error ? backupError.message : "An unexpected error occurred");
+        }
       } finally {
         setLoading(false);
       }
@@ -147,6 +165,7 @@ const Orders: React.FC = () => {
 };
 
 export default Orders;
+
 
 
 

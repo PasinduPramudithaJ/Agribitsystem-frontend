@@ -14,47 +14,55 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { setCurrentUser } = useUser();
 
+  const loginRequest = async (url: string) => {
+    return axios.post(url, { userEmail, password });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    try {
-      const res = await axios.post("http://localhost:8080/user/login", {
-        userEmail,
-        password,
-      });
+    const urls = [
+      "http://localhost:8080/user/login",
+      "https://agribitsystembackend-production.up.railway.app/user/login",
+    ];
 
-      const userData = res.data;
+    for (const url of urls) {
+      try {
+        const res = await loginRequest(url);
+        const userData = res.data;
 
-      setCurrentUser(userData);
-      localStorage.setItem("currentUser", JSON.stringify(userData));
+        setCurrentUser(userData);
+        localStorage.setItem("currentUser", JSON.stringify(userData));
 
-      const userRole = userData.role;
-      switch (userRole) {
-        case "Farmer":
-          navigate("/add");
+        const userRole = userData.role;
+        switch (userRole) {
+          case "Farmer":
+            navigate("/add");
+            break;
+          case "Buyer":
+            navigate("/gigs");
+            break;
+          case "Admin":
+            navigate("/admin");
+            break;
+          default:
+            throw new Error("Invalid user role. Please contact support.");
+        }
+        return;
+      } catch (err: any) {
+        if (err.response) {
+          setError(err.response.data.message || "Invalid credentials.");
+        } else if (err.request) {
+          console.warn(`Failed to connect to ${url}. Trying next...`);
+        } else {
+          setError("An unexpected error occurred.");
           break;
-        case "Buyer":
-          navigate("/gigs");
-          break;
-        case "Admin":
-          navigate("/admin");
-          break;
-        default:
-          throw new Error("Invalid user role. Please contact support.");
+        }
       }
-    } catch (err: any) {
-      if (err.response) {
-        setError(err.response.data.message || "Invalid credentials.");
-      } else if (err.request) {
-        setError("Unable to connect to the server.");
-      } else {
-        setError("An unexpected error occurred.");
-      }
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   return (

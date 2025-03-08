@@ -20,13 +20,20 @@ const Register = () => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => { 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
+      // Try registering with the primary API
       await axios.post("http://localhost:8080/user/register", user);
       navigate("/login");
     } catch (err) {
-      setError("Registration failed. Please try again.");
+      // If primary API fails, try the backup API
+      try {
+        await axios.post("https://agribitsystembackend-production.up.railway.app/user/register", user);
+        navigate("/login");
+      } catch (backupError) {
+        setError("Registration failed. Please try again.");
+      }
     }
   };
 
@@ -97,6 +104,7 @@ const Register = () => {
 };
 
 export default Register;
+
 
 
 

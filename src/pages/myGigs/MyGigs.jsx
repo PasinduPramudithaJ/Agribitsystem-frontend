@@ -23,10 +23,17 @@ const MyGigs = () => {
 
     const fetchProjects = async () => {
       try {
+        // First try fetching from the primary endpoint
         const response = await axios.get(`http://localhost:8080/api/products/user/${userId}`);
         setProjects(response.data);
       } catch (err) {
-        setError("Failed to load products. Please try again.");
+        // If it fails, try the backup endpoint
+        try {
+          const backupResponse = await axios.get(`https://agribitsystembackend-production.up.railway.app/api/products/user/${userId}`);
+          setProjects(backupResponse.data);
+        } catch (backupError) {
+          setError("Failed to load products. Please try again.");
+        }
       } finally {
         setLoading(false);
       }
@@ -97,6 +104,7 @@ const MyGigs = () => {
 };
 
 export default MyGigs;
+
 
 
 
