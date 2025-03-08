@@ -171,7 +171,7 @@ const Add = () => {
               name="image"
               id="image"
               accept="image/*"
-              onChange={handleImageChange}
+              onSubmit={handleImageChange}
             />
           </div>
 
