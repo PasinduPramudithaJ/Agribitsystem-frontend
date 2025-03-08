@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import "./Add.scss";
 import { useNavigate } from "react-router-dom";
 
+const PRIMARY_API = "http://localhost:8080/api/products";
+const SECONDARY_API = "https://agribitsystembackend-production.up.railway.app";
+
 const Add = () => {
   const [product, setProduct] = useState({
     productId: "",
@@ -16,19 +19,18 @@ const Add = () => {
     size: "",
     status: "",
     productQuantity: 0,
-    userId: "", // Automatically filled with the logged-in user's ID
+    userId: "", 
   });
 
-  const [image, setImage] = useState(null); // State to hold the image file
+  const [image, setImage] = useState(null);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Extract the userId from the JWT token stored in localStorage
     const currentUser = localStorage.getItem("currentUser");
     if (currentUser) {
       const { userId } = JSON.parse(currentUser);
-      setProduct((prevProduct) => ({ ...prevProduct, userId })); // Set the userId in the product state
+      setProduct((prevProduct) => ({ ...prevProduct, userId }));
     }
   }, []);
 
@@ -41,7 +43,7 @@ const Add = () => {
   };
 
   const handleImageChange = (e) => {
-    setImage(e.target.files[0]); // Update image state
+    setImage(e.target.files[0]);
   };
 
   const validate = () => {
@@ -56,6 +58,32 @@ const Add = () => {
     return newErrors;
   };
 
+  const submitToAPI = async (apiUrl) => {
+    const formData = new FormData();
+    formData.append("product", JSON.stringify(product));
+    if (image) {
+      formData.append("image", image);
+    }
+
+    const token = localStorage.getItem("currentUser")
+      ? JSON.parse(localStorage.getItem("currentUser")).token
+      : null;
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      return response;
+    } catch (error) {
+      console.error(`Error sending request to ${apiUrl}:`, error);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formErrors = validate();
@@ -64,50 +92,17 @@ const Add = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("product", JSON.stringify(product)); // Append product data as JSON string
-    if (image) {
-      formData.append("image", image); // Append image file if available
+    let response = await submitToAPI(PRIMARY_API);
+    if (!response || !response.ok) {
+      console.warn("Primary API failed, trying secondary API...");
+      response = await submitToAPI(SECONDARY_API);
     }
 
-    try {
-      // Retrieve the token from localStorage
-      const token = localStorage.getItem("currentUser")
-        ? JSON.parse(localStorage.getItem("currentUser")).token
-        : null;
-
-      // Function to send request
-      const sendRequest = async (url) => {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`, // Include the JWT token in the Authorization header
-          },
-          body: formData, // Send multipart form data
-        });
-        return response;
-      };
-
-      // Try to send the request to the primary API first
-      let response = await sendRequest("https://agribitsystembackend-production.up.railway.app/api/products");
-
-      // If primary API fails, try the backup API
-      if (!response.ok) {
-        console.log("Primary API failed. Trying backup API...");
-        response = await sendRequest("http://localhost:8080/api/products");
-      }
-
-      // Handle response after trying both APIs
-      if (response.ok) {
-        alert("Product created successfully!");
-        navigate("/gigs"); // Navigate to the product list or relevant page
-      } else {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.message}`);
-      }
-    } catch (error) {
-      console.error("Error creating product:", error);
-      alert("Failed to create product. Please try again.");
+    if (response && response.ok) {
+      alert("Product created successfully!");
+      navigate("/gigs");
+    } else {
+      alert("Failed to create product. Please try again later.");
     }
   };
 
@@ -116,7 +111,19 @@ const Add = () => {
       <div className="container">
         <h1>Add New Product</h1>
         <form onSubmit={handleSubmit}>
-          {[ /* Form Fields */ ].map((field) => (
+          {[
+            { label: "Product ID", name: "productId", type: "text", placeholder: "Unique Product ID" },
+            { label: "Name", name: "name", type: "text", placeholder: "Product Name" },
+            { label: "Description", name: "description", type: "textarea", placeholder: "Product Description" },
+            { label: "Quantity", name: "quantity", type: "number", placeholder: "Available Quantity" },
+            { label: "Quality", name: "quality", type: "text", placeholder: "Product Quality" },
+            { label: "Location", name: "location", type: "text", placeholder: "Product Location" },
+            { label: "Start Bid Price", name: "startBidPrice", type: "number", placeholder: "Start Bid Price" },
+            { label: "Buy Now Price", name: "buyNowPrice", type: "number", placeholder: "Buy Now Price" },
+            { label: "Size", name: "size", type: "text", placeholder: "Product Size or Dimensions" },
+            { label: "Status", name: "status", type: "text", placeholder: "Status (e.g., Available, Sold)" },
+            { label: "Stock Quantity", name: "productQuantity", type: "number", placeholder: "Stock Quantity" },
+          ].map((field) => (
             <div className="form-group" key={field.name}>
               <label htmlFor={field.name}>{field.label}</label>
               {field.type === "textarea" ? (
@@ -142,39 +149,10 @@ const Add = () => {
               {errors[field.name] && <span className="error">{errors[field.name]}</span>}
             </div>
           ))}
-
-          {/* Category dropdown */}
-          <div className="form-group">
-            <label htmlFor="category">Category</label>
-            <select
-              name="category"
-              id="category"
-              value={product.category}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select a category</option>
-              <option value="vegetables">Vegetables</option>
-              <option value="fruits">Fruits</option>
-              <option value="coconuts">Coconuts</option>
-              <option value="fish">Fish</option>
-              <option value="meat">Meat</option>
-            </select>
-            {errors.category && <span className="error">{errors.category}</span>}
-          </div>
-
-          {/* Image upload */}
           <div className="form-group">
             <label htmlFor="image">Upload Image</label>
-            <input
-              type="file"
-              name="image"
-              id="image"
-              accept="image/*"
-              onSubmit={handleImageChange}
-            />
+            <input type="file" name="image" id="image" accept="image/*" onChange={handleImageChange} />
           </div>
-
           <button type="submit">Create Product</button>
         </form>
       </div>
