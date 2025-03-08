@@ -3,7 +3,7 @@ import "./Add.scss";
 import { useNavigate } from "react-router-dom";
 
 const PRIMARY_API = "http://localhost:8080/api/products";
-const SECONDARY_API = "https://agribitsystembackend-production.up.railway.app";
+const SECONDARY_API = "https://agribitsystembackend-production.up.railway.app/api/products";
 
 const Add = () => {
   const [product, setProduct] = useState({
