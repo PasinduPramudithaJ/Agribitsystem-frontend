@@ -2,9 +2,6 @@ import React, { useState, useEffect } from "react";
 import "./Add.scss";
 import { useNavigate } from "react-router-dom";
 
-const PRIMARY_API = "http://localhost:8080/api/products";
-const SECONDARY_API = "https://agribitsystembackend-production.up.railway.app/api/products";
-
 const Add = () => {
   const [product, setProduct] = useState({
     productId: "",
@@ -19,12 +16,15 @@ const Add = () => {
     size: "",
     status: "",
     productQuantity: 0,
-    userId: "", 
+    userId: "", // Automatically filled with the logged-in user's ID
   });
 
   const [image, setImage] = useState(null);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+
+  const API_PRIMARY = "https://agribitsystembackend-production.up.railway.app/api/products";
+  const API_FAILOVER = "https://macanium-backend.com/api/products";
 
   useEffect(() => {
     const currentUser = localStorage.getItem("currentUser");
@@ -58,18 +58,18 @@ const Add = () => {
     return newErrors;
   };
 
-  const submitToAPI = async (apiUrl) => {
+  const uploadProduct = async (apiUrl) => {
     const formData = new FormData();
     formData.append("product", JSON.stringify(product));
     if (image) {
       formData.append("image", image);
     }
 
-    const token = localStorage.getItem("currentUser")
-      ? JSON.parse(localStorage.getItem("currentUser")).token
-      : null;
-
     try {
+      const token = localStorage.getItem("currentUser")
+        ? JSON.parse(localStorage.getItem("currentUser")).token
+        : null;
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -77,10 +77,19 @@ const Add = () => {
         },
         body: formData,
       });
-      return response;
+
+      if (response.ok) {
+        alert("Product created successfully!");
+        navigate("/gigs");
+        return true; // Success
+      } else {
+        const errorData = await response.json();
+        console.error("Error response:", errorData);
+        return false; // Failure
+      }
     } catch (error) {
-      console.error(`Error sending request to ${apiUrl}:`, error);
-      return null;
+      console.error("Error creating product:", error);
+      return false; // Failure
     }
   };
 
@@ -92,17 +101,11 @@ const Add = () => {
       return;
     }
 
-    let response = await submitToAPI(PRIMARY_API);
-    if (!response || !response.ok) {
-      console.warn("Primary API failed, trying secondary API...");
-      response = await submitToAPI(SECONDARY_API);
-    }
-
-    if (response && response.ok) {
-      alert("Product created successfully!");
-      navigate("/gigs");
-    } else {
-      alert("Failed to create product. Please try again later.");
+    // Try primary API, if it fails, try failover API
+    const success = await uploadProduct(API_PRIMARY);
+    if (!success) {
+      console.warn("Primary API failed, trying failover API...");
+      await uploadProduct(API_FAILOVER);
     }
   };
 
@@ -149,10 +152,37 @@ const Add = () => {
               {errors[field.name] && <span className="error">{errors[field.name]}</span>}
             </div>
           ))}
+
+          <div className="form-group">
+            <label htmlFor="category">Category</label>
+            <select
+              name="category"
+              id="category"
+              value={product.category}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select a category</option>
+              <option value="vegetables">Vegetables</option>
+              <option value="fruits">Fruits</option>
+              <option value="coconuts">Coconuts</option>
+              <option value="fish">Fish</option>
+              <option value="meat">Meat</option>
+            </select>
+            {errors.category && <span className="error">{errors.category}</span>}
+          </div>
+
           <div className="form-group">
             <label htmlFor="image">Upload Image</label>
-            <input type="file" name="image" id="image" accept="image/*" onChange={handleImageChange} />
+            <input
+              type="file"
+              name="image"
+              id="image"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
           </div>
+
           <button type="submit">Create Product</button>
         </form>
       </div>
@@ -161,3 +191,4 @@ const Add = () => {
 };
 
 export default Add;
+
